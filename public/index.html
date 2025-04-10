@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Campus Craving</title>
+    <script>
+      async function fetchData() {
+        try {
+          const response = await fetch("/api");
+          const data = await response.json();
+          document.getElementById("output").innerText = data.message;
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+      window.onload = fetchData;
+    </script>
+  </head>
+  <body>
+    <h1>Campus Craving Backend</h1>
+    <div id="output">Loading...</div>
+  </body>
+</html>
