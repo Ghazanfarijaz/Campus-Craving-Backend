@@ -11,7 +11,7 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() =>
-    University.create({ name: "Example University", domain: "example.edu" })
+    University.create({ name: "FAST University", domain: "nu.edu.pk" })
   )
   .then(() => console.log("University seeded successfully!"))
   .catch(console.error)
