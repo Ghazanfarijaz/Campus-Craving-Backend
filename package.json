@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "nodemailer": "^6.10.0",
+    "twilio": "^5.5.2",
     "validator": "^13.15.0"
   },
   "devDependencies": {

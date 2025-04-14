@@ -36,7 +36,12 @@ const sendPasswordResetEmail = (email, token) => {
   const subject = "Password Reset Request";
   const html = `
     <h2>Reset Password</h2>
-    <p>Click <a href="${process.env.BASE_URL}/api/reset-password?token=${token}">here</a> to reset.</p>
+    <p>Click <a href="${
+      process.env.FRONTEND_URL
+    }/reset-password?token=${token}&email=${encodeURIComponent(
+    email
+  )}">here</a> to reset.</p>
+    <p>Or enter this code manually: ${token}</p>
   `;
   return sendEmail(email, subject, html);
 };
