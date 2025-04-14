@@ -1,63 +1,44 @@
-// // services/email.service.js
-// const sgMail = require("@sendgrid/mail");
-// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+require("dotenv").config();
 
-// const sendVerificationEmail = async (email, verificationToken) => {
-//   const msg = {
-//     to: email,
-//     from: "no-reply@campuscravings.com",
-//     subject: "Verify Your Campus Cravings Account",
-//     html: `
-//       <h2>Welcome to Campus Cravings!</h2>
-//       <p>Click <a href="${process.env.BASE_URL}/verify-email?token=${verificationToken}">here</a> to verify your email.</p>
-//     `,
-//   };
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-//   await sgMail.send(msg);
-// };
-
-// module.exports = { sendVerificationEmail };
-
-// services/email.service.js
-const nodemailer = require("nodemailer");
-
-// Configure transporter (using Gmail for testing)
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER, // Your Gmail
-    pass: process.env.EMAIL_PASSWORD, // Gmail app password
-  },
-});
-
-// Send verification email
-const sendVerificationEmail = async (email, verificationToken) => {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Verify Your Campus Cravings Account",
-    html: `
-      <h2>Welcome to Campus Cravings!</h2>
-      <p>Click <a href="${process.env.BASE_URL}/verify-email?token=${verificationToken}">here</a> to verify your email.</p>
-    `,
-  };
-
-  await transporter.sendMail(mailOptions);
+const sendEmail = async (to, subject, html) => {
+  const msg = { to, from: process.env.EMAIL_FROM, subject, html };
+  await sgMail.send(msg);
 };
 
-// Send password reset email
-const sendPasswordResetEmail = async (email, resetToken) => {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Password Reset Request",
-    html: `
-      <h2>Reset Your Password</h2>
-      <p>Click <a href="${process.env.BASE_URL}/reset-password?token=${resetToken}">here</a> to reset your password.</p>
-    `,
-  };
+const sendVerificationEmail = async (email, token) => {
+  try {
+    if (!process.env.SENDGRID_API_KEY) {
+      throw new Error("SendGrid API key is missing");
+    }
 
-  await transporter.sendMail(mailOptions);
+    const msg = {
+      to: email,
+      from: process.env.EMAIL_FROM || "no-reply@campuscravings.com",
+      subject: "Verify Your Campus Cravings Account",
+      html: `Click <a href="${process.env.BASE_URL}/api/verify-email?token=${token}">here</a> to verify your email.`,
+    };
+
+    await sgMail.send(msg);
+    console.log(`Verification email sent to ${email}`);
+  } catch (err) {
+    console.error(
+      "Failed to send verification email:",
+      err.response?.body || err.message
+    );
+    throw new Error("Failed to send verification email");
+  }
+};
+
+const sendPasswordResetEmail = (email, token) => {
+  const subject = "Password Reset Request";
+  const html = `
+    <h2>Reset Password</h2>
+    <p>Click <a href="${process.env.BASE_URL}/api/reset-password?token=${token}">here</a> to reset.</p>
+  `;
+  return sendEmail(email, subject, html);
 };
 
 module.exports = { sendVerificationEmail, sendPasswordResetEmail };

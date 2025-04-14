@@ -2,10 +2,11 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User.model");
-const { generateResetToken } = require("../services/password.service");
-const { sendPasswordResetEmail } = require("../services/email.service");
+const {
+  generateResetToken,
+  sendPasswordResetEmail,
+} = require("../services/password.service");
 
-// Forgot password
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
@@ -13,14 +14,13 @@ router.post("/forgot-password", async (req, res) => {
 
   const token = generateResetToken();
   user.resetPasswordToken = token;
-  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
   await user.save();
+  await sendPasswordResetEmail(email, token);
 
-  await sendPasswordResetEmail(email, token); // Nodemailer sends email
-  res.json({ message: "Password reset email sent" });
+  res.json({ message: "Reset email sent" });
 });
 
-// Reset password
 router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
   const user = await User.findOne({
@@ -34,7 +34,7 @@ router.post("/reset-password", async (req, res) => {
   user.resetPasswordExpires = undefined;
   await user.save();
 
-  res.json({ message: "Password reset successful" });
+  res.json({ message: "Password updated successfully" });
 });
 
 module.exports = router;

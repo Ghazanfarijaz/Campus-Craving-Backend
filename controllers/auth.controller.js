@@ -1,26 +1,60 @@
-// controllers/auth.controller.js
-const { register, login } = require("../services/auth.service");
+const AuthService = require("../services/auth.service");
+const PasswordService = require("../services/password.service");
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-exports.registerUser = async (req, res) => {
+exports.register = async (req, res) => {
   try {
-    const { email, password, role, universityDomain } = req.body;
-    const user = await register(email, password, role, universityDomain);
-    res.status(201).json({ success: true, data: user });
+    // Validate required fields
+    if (!req.body.email || !req.body.password || !req.body.universityDomain) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: email, password, universityDomain",
+      });
+    }
+
+    const user = await AuthService.register(req.body);
+    res.status(201).json({
+      success: true,
+      data: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      error: err.message || "Registration failed",
+    });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { user, token } = await AuthService.login(
+      req.body.email,
+      req.body.password
+    );
+    res.json({ success: true, token, data: user });
+  } catch (err) {
+    res.status(401).json({ success: false, error: err.message });
+  }
+};
+
+exports.requestPasswordReset = async (req, res) => {
+  try {
+    await PasswordService.requestReset(req.body.email);
+    res.json({ success: true, message: "Reset email sent" });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-exports.loginUser = async (req, res) => {
+exports.resetPassword = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const { user, token } = await login(email, password);
-    res.status(200).json({ success: true, token, data: user });
+    await PasswordService.resetPassword(req.body.token, req.body.newPassword);
+    res.json({ success: true, message: "Password updated" });
   } catch (err) {
-    res.status(401).json({ success: false, error: err.message });
+    res.status(400).json({ success: false, error: err.message });
   }
 };

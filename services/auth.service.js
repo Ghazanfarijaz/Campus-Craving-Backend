@@ -1,50 +1,89 @@
-// services/auth.service.js
 const User = require("../models/User.model");
 const University = require("../models/University.model");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-
-// services/auth.service.js
 const { sendVerificationEmail } = require("./email.service");
+const jwt = require("jsonwebtoken");
 
-// Register a new user
-const register = async (email, password, role, universityDomain) => {
-  // 1. Validate university domain
-  const university = await University.findOne({ domain: universityDomain });
-  if (!university) throw new Error("University not whitelisted");
-
-  // 2. Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // 3. Create user
-  const user = await User.create({
+class AuthService {
+  static async register({
+    firstName,
+    lastName,
     email,
-    password: hashedPassword,
+    password,
     role,
-    universityId: university._id,
-  });
+    universityDomain,
+  }) {
+    try {
+      // 1. Validate university
+      const university = await University.findOne({ domain: universityDomain });
+      if (!university) {
+        console.log("University not found for domain:", universityDomain);
+        throw new Error("University not whitelisted");
+      }
 
-  //   const token = user.generateVerificationToken();
-  //   await sendVerificationEmail(email, token); // Send email
+      // 2. Check existing user
+      if (await User.isEmailTaken(email)) {
+        console.log("Email already exists:", email);
+        throw new Error("Email already taken");
+      }
 
-  const token = user.generateVerificationToken();
-  console.log("Verification token (for testing):", token); // Log token instead of sending email
+      // 3. Create user
+      const user = await User.create(
+        await User.newEntity({
+          firstName,
+          lastName,
+          email,
+          password,
+          role,
+          universityId: university._id,
+        })
+      );
+      console.log("User created successfully:", user.email);
 
-  return user;
-};
+      // 4. Generate token
+      const token = user.generateVerificationToken();
+      console.log("Generated token:", token);
 
-// Login user
-const login = async (email, password) => {
-  const user = await User.findOne({ email }).select("+password");
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    throw new Error("Invalid credentials");
+      // 5. Send email
+      await sendVerificationEmail(email, token);
+      console.log("Verification email sent to:", email);
+
+      return user;
+    } catch (err) {
+      console.error("Registration error:", err);
+      throw err; // This will be caught by the controller
+    }
   }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+  static async login(email, password) {
+    const user = await User.findOne({ email }).select("+password");
 
-  return { user, token };
-};
+    if (!user || !(await User.isPasswordMatch(user, password))) {
+      throw new Error("Invalid credentials");
+    }
 
-module.exports = { register, login };
+    if (!user.isEmailVerified) {
+      throw new Error("Please verify your email first");
+    }
+
+    // Create token with more unique data
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        universityId: user.universityId,
+        lastLogin: Date.now(),
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Update last access
+    user.lastAccess = new Date();
+    await user.save();
+
+    return { user, token };
+  }
+}
+
+module.exports = AuthService;
