@@ -310,6 +310,8 @@ userSchema.statics = {
       isPhoneVerified: false,
       status: "pending",
       ...(body.password && { password: body.password }), // Will be hashed by pre-save hook
+      googleId: String,
+      facebookId: String,
     };
   },
 

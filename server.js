@@ -138,6 +138,9 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const passport = require("passport");
+require("./config/passport"); // Initialize strategies
+const jwt = require("jsonwebtoken"); // Add with other requires
 
 const app = express();
 
@@ -149,6 +152,8 @@ app.use(express.json());
 const connectDB = require("./config/db");
 connectDB();
 
+// Add after other middleware
+app.use(passport.initialize());
 // Routes
 app.get("/", (req, res) => {
   res.send("Campus Cravings Backend is running!");
@@ -175,6 +180,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
+app.use((err, req, res, next) => {
+  if (err.name === "OAuthError") {
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/login?error=google_auth_failed`
+    );
+  }
+  next(err);
+});
 // Start Server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
