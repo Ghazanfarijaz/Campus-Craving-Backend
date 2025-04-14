@@ -23,7 +23,9 @@ const {
   resendOTP,
   forgotPassword,
   resetPassword,
+  updatePassword,
 } = require("../controllers/auth.controller");
+const { protect } = require("../middlewares/auth.middleware");
 
 router.post("/register", register);
 router.post("/verify-otp", verifyOTP);
@@ -32,5 +34,8 @@ router.post("/resend-otp", resendOTP);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+// Add with other routes
+router.post("/update-password", protect, updatePassword);
 
 module.exports = router;

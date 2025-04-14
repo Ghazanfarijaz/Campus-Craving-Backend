@@ -163,8 +163,8 @@ app.get("/", (req, res) => {
 // app.use("/api", verifyRoutes);
 
 // Add this with your other route imports
-const verifyRouter = require("./routes/verify.routes");
-app.use("api/verify-email", verifyRouter); // Note: No '/api' prefix here
+// const verifyRouter = require("./routes/verify.routes");
+// app.use("api/verify-email", verifyRouter); // Note: No '/api' prefix here
 
 // Add after other middleware
 app.use("/api/auth", require("./routes/auth.routes"));

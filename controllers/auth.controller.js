@@ -143,3 +143,23 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    await PasswordService.updatePassword(
+      req.user.id,
+      currentPassword,
+      newPassword
+    );
+    res.json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};

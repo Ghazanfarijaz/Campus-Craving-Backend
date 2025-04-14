@@ -73,6 +73,27 @@ class PasswordService {
 
     return { message: "Password updated successfully" };
   }
+
+  static async updatePassword(userId, currentPassword, newPassword) {
+    // 1. Find user
+    const user = await User.findById(userId).select("+password");
+    if (!user) throw new Error("User not found");
+
+    // 2. Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) throw new Error("Current password is incorrect");
+
+    // 3. Validate new password
+    if (currentPassword === newPassword) {
+      throw new Error("New password must be different");
+    }
+
+    // 4. Update password (pre-save hook will hash it)
+    user.password = newPassword;
+    await user.save();
+
+    return { message: "Password updated successfully" };
+  }
 }
 
 module.exports = PasswordService;
