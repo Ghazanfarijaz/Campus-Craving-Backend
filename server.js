@@ -154,7 +154,10 @@ connectDB();
 
 // Add after other middleware
 app.use(passport.initialize());
+
 // Routes
+
+// Basic backend check of running or not
 app.get("/", (req, res) => {
   res.send("Campus Cravings Backend is running!");
 });
